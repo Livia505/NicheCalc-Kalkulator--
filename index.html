@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator Web Pink</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #fce4ec;
+      margin: 0;
+    }
+    .calculator {
+      background: #f8bbd0;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0px 8px 15px rgba(233, 30, 99, 0.2);
+    }
+    #display {
+      width: 100%;
+      height: 55px;
+      font-size: 1.6rem;
+      text-align: right;
+      margin-bottom: 15px;
+      padding-right: 12px;
+      box-sizing: border-box;
+      border: 2px solid #f48fb1;
+      border-radius: 8px;
+      background-color: #ffffff;
+      color: #880e4f;
+      font-weight: bold;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    button {
+      padding: 15px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #880e4f;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    button:hover { background: #f1f1f1; }
+    button.operator { background: #ec407a; color: white; }
+    button.operator:hover { background: #d81b60; }
+    button.clear { background: #c2185b; color: white; }
+    button.clear:hover { background: #ad1457; }
+    button.delete { background: #f48fb1; color: #880e4f; }
+    button.delete:hover { background: #f06292; color: white; }
+  </style>
+</head>
+<body>
+
+<div class="calculator">
+  <input type="text" id="display" readonly>
+  <div class="buttons">
+    <button class="clear" onclick="d.value = ''">C</button>
+    <button class="delete" onclick="d.value = d.value.slice(0, -1)">⌫</button>
+    <button onclick="d.value += '/'" class="operator">/</button>
+    <button onclick="d.value += '*'" class="operator">*</button>
+
+    <button onclick="d.value += '7'">7</button>
+    <button onclick="d.value += '8'">8</button>
+    <button onclick="d.value += '9'">9</button>
+    <button onclick="d.value += '-'" class="operator">-</button>
+
+    <button onclick="d.value += '4'">4</button>
+    <button onclick="d.value += '5'">5</button>
+    <button onclick="d.value += '6'">6</button>
+    <button onclick="d.value += '+'" class="operator">+</button>
+
+    <button onclick="d.value += '1'">1</button>
+    <button onclick="d.value += '2'">2</button>
+    <button onclick="d.value += '3'">3</button>
+    <button onclick="try { d.value = eval(d.value) } catch { d.value = 'Error' }" class="operator" style="grid-row: span 2; height: 100%;">=</button>
+
+    <button onclick="d.value += '0'" style="grid-column: span 2;">0</button>
+    <button onclick="d.value += '.'">.</button>
+  </div>
+</div>
+
+<script>
+  const d = document.getElementById('display');
+</script>
+
+</body>
+</html>

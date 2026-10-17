@@ -1,97 +1,787 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalkulator Web Pink</title>
+  <title>Niche Calculator & Document Generator</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #fce4ec;
-      margin: 0;
+    @media print {
+      body * { visibility: hidden; }
+      #invoice-print-area, #invoice-print-area * { visibility: visible; }
+      #invoice-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white !important;
+        color: black !important;
+      }
+      .no-print { display: none !important; }
     }
-    .calculator {
-      background: #f8bbd0;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0px 8px 15px rgba(233, 30, 99, 0.2);
+    .tab-btn.active {
+      background-color: #2563eb;
+      color: white;
     }
-    #display {
-      width: 100%;
-      height: 55px;
-      font-size: 1.6rem;
-      text-align: right;
-      margin-bottom: 15px;
-      padding-right: 12px;
-      box-sizing: border-box;
-      border: 2px solid #f48fb1;
-      border-radius: 8px;
-      background-color: #ffffff;
-      color: #880e4f;
-      font-weight: bold;
-    }
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
-    button {
-      padding: 15px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #ffffff;
-      color: #880e4f;
-      font-weight: bold;
-      transition: background 0.2s;
-    }
-    button:hover { background: #f1f1f1; }
-    button.operator { background: #ec407a; color: white; }
-    button.operator:hover { background: #d81b60; }
-    button.clear { background: #c2185b; color: white; }
-    button.clear:hover { background: #ad1457; }
-    button.delete { background: #f48fb1; color: #880e4f; }
-    button.delete:hover { background: #f06292; color: white; }
   </style>
 </head>
-<body>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-full transition-colors duration-200">
 
-<div class="calculator">
-  <input type="text" id="display" readonly>
-  <div class="buttons">
-    <button class="clear" onclick="d.value = ''">C</button>
-    <button class="delete" onclick="d.value = d.value.slice(0, -1)">⌫</button>
-    <button onclick="d.value += '/'" class="operator">/</button>
-    <button onclick="d.value += '*'" class="operator">*</button>
+  <div class="flex flex-col md:flex-row min-h-screen">
+    
+    <!-- Sidebar / Navigation -->
+    <aside class="w-full md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col justify-between no-print">
+      <div>
+        <div class="flex items-center gap-3 mb-8 px-2">
+          <div class="p-2 bg-brand-600 text-white rounded-xl">
+            <i data-lucide="calculator" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg leading-tight">NicheCalc</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Toolkit Produktivitas</p>
+          </div>
+        </div>
 
-    <button onclick="d.value += '7'">7</button>
-    <button onclick="d.value += '8'">8</button>
-    <button onclick="d.value += '9'">9</button>
-    <button onclick="d.value += '-'" class="operator">-</button>
+        <nav class="space-y-1">
+          <button onclick="switchTab('invoice')" id="tab-invoice" class="tab-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Invoice & Quotation</span>
+          </button>
+          <button onclick="switchTab('pph21')" id="tab-pph21" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+            <span>Kalkulator PPh 21</span>
+          </button>
+          <button onclick="switchTab('freelance')" id="tab-freelance" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+            <i data-lucide="briefcase" class="w-4 h-4"></i>
+            <span>Tarif Freelance</span>
+          </button>
+          <button onclick="switchTab('material')" id="tab-material" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+            <i data-lucide="box" class="w-4 h-4"></i>
+            <span>Estimator Material</span>
+          </button>
+        </nav>
+      </div>
 
-    <button onclick="d.value += '4'">4</button>
-    <button onclick="d.value += '5'">5</button>
-    <button onclick="d.value += '6'">6</button>
-    <button onclick="d.value += '+'" class="operator">+</button>
+      <div class="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between px-2">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Mode Tampilan</span>
+        <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+          <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+          <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+        </button>
+      </div>
+    </aside>
 
-    <button onclick="d.value += '1'">1</button>
-    <button onclick="d.value += '2'">2</button>
-    <button onclick="d.value += '3'">3</button>
-    <button onclick="try { d.value = eval(d.value) } catch { d.value = 'Error' }" class="operator" style="grid-row: span 2; height: 100%;">=</button>
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+      
+      <!-- 1. INVOICE & QUOTATION GENERATOR -->
+      <section id="section-invoice" class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+          <div>
+            <h2 class="text-2xl font-bold">Generator Invoice & Surat Penawaran</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Buat dokumen profesional dan cetak langsung ke PDF.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="fillSampleInvoice()" class="px-3 py-2 text-xs font-medium bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Isi Contoh Data
+            </button>
+            <button onclick="window.print()" class="px-4 py-2 text-sm font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2 shadow-sm">
+              <i data-lucide="printer" class="w-4 h-4"></i> Cetak / Simpan PDF
+            </button>
+          </div>
+        </div>
 
-    <button onclick="d.value += '0'" style="grid-column: span 2;">0</button>
-    <button onclick="d.value += '.'">.</button>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <!-- Editor Form -->
+          <div class="lg:col-span-5 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-4 no-print shadow-sm">
+            <h3 class="font-semibold text-lg border-b pb-2 dark:border-gray-700">Pengaturan Dokumen</h3>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium mb-1">Tipe Dokumen</label>
+                <select id="inv-type" onchange="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+                  <option value="INVOICE">INVOICE</option>
+                  <option value="SURAT PENAWARAN">SURAT PENAWARAN</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Mata Uang</label>
+                <select id="inv-currency" onchange="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+                  <option value="Rp">Rupiah (Rp)</option>
+                  <option value="$">USD ($)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium mb-1">Nomor Dokumen</label>
+                <input type="text" id="inv-number" value="INV/2026/001" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Tanggal Tanggal</label>
+                <input type="date" id="inv-date" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-xs font-medium">Informasi Pengirim (Anda/Perusahaan)</label>
+              <input type="text" id="inv-sender-name" placeholder="Nama Perusahaan / Freelancer" value="PT Studio Kreatif Digital" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              <textarea id="inv-sender-detail" placeholder="Alamat & Kontak" rows="2" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">Jl. Sudirman No. 45, Jakarta Pusat
+Email: halo@studiokreatif.id</textarea>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-xs font-medium">Informasi Klien</label>
+              <input type="text" id="inv-client-name" placeholder="Nama Klien / Perusahaan" value="CV Maju Bersama" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              <textarea id="inv-client-detail" placeholder="Alamat Klien" rows="2" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">Gedung Innovation Tower Lt. 5, Bandung</textarea>
+            </div>
+
+            <div class="pt-2 border-t dark:border-gray-700">
+              <div class="flex justify-between items-center mb-2">
+                <label class="block text-xs font-medium">Item Pekerjaan / Layanan</label>
+                <button onclick="addInvoiceItem()" class="text-xs bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300 px-2 py-1 rounded hover:bg-brand-100 font-medium">+ Tambah Item</button>
+              </div>
+              <div id="invoice-items-inputs" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2 border-t dark:border-gray-700">
+              <div>
+                <label class="block text-xs font-medium mb-1">Diskon (%)</label>
+                <input type="number" id="inv-discount" value="0" min="0" max="100" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">PPN (%)</label>
+                <input type="number" id="inv-tax" value="11" min="0" max="100" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Catatan / Instruksi Pembayaran</label>
+              <textarea id="inv-notes" rows="2" oninput="renderInvoice()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">Transfer Bank BCA: 123-456-7890 a.n. PT Studio Kreatif Digital. Pembayaran maksimal 14 hari.</textarea>
+            </div>
+          </div>
+
+          <!-- Document Preview (Printable Area) -->
+          <div class="lg:col-span-7">
+            <div id="invoice-print-area" class="bg-white text-gray-900 p-8 rounded-xl shadow-md border border-gray-200 min-h-[650px] flex flex-col justify-between">
+              <div>
+                <!-- Header Dokumen -->
+                <div class="flex justify-between items-start border-b pb-6 mb-6">
+                  <div>
+                    <h1 id="preview-type" class="text-2xl font-bold tracking-wider text-brand-700">INVOICE</h1>
+                    <p id="preview-number" class="text-sm text-gray-500 font-mono">#INV/2026/001</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs text-gray-400">Tanggal:</p>
+                    <p id="preview-date" class="text-sm font-semibold">17 Oktober 2026</p>
+                  </div>
+                </div>
+
+                <!-- Detail Pengirim & Klien -->
+                <div class="grid grid-cols-2 gap-6 mb-8 text-sm">
+                  <div>
+                    <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Dari:</p>
+                    <p id="preview-sender-name" class="font-bold text-gray-800"></p>
+                    <p id="preview-sender-detail" class="text-gray-600 whitespace-pre-line text-xs mt-1"></p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Ditujukan Kepada:</p>
+                    <p id="preview-client-name" class="font-bold text-gray-800"></p>
+                    <p id="preview-client-detail" class="text-gray-600 whitespace-pre-line text-xs mt-1"></p>
+                  </div>
+                </div>
+
+                <!-- Tabel Item -->
+                <table class="w-full text-left mb-6 text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                      <th class="py-2">Deskripsi Layanan</th>
+                      <th class="py-2 text-center">Qty</th>
+                      <th class="py-2 text-right">Harga Satuan</th>
+                      <th class="py-2 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="preview-items-table" class="divide-y divide-gray-100">
+                    <!-- Dynamic Rows -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Ringkasan & Total -->
+              <div>
+                <div class="flex justify-end mb-6">
+                  <div class="w-64 space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-600">
+                      <span>Subtotal</span>
+                      <span id="preview-subtotal" class="font-mono">Rp 0</span>
+                    </div>
+                    <div id="preview-discount-row" class="flex justify-between text-gray-600">
+                      <span>Diskon</span>
+                      <span id="preview-discount" class="font-mono">-Rp 0</span>
+                    </div>
+                    <div id="preview-tax-row" class="flex justify-between text-gray-600">
+                      <span>PPN</span>
+                      <span id="preview-tax" class="font-mono">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-base border-t pt-2 text-brand-700">
+                      <span>Total Bayar</span>
+                      <span id="preview-grandtotal" class="font-mono">Rp 0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer Catatan -->
+                <div class="border-t pt-4 text-xs text-gray-500">
+                  <p class="font-semibold text-gray-700 mb-1">Catatan / Keterangan:</p>
+                  <p id="preview-notes" class="whitespace-pre-line"></p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. PPH 21 TAX CALCULATOR -->
+      <section id="section-pph21" class="space-y-6 hidden">
+        <div>
+          <h2 class="text-2xl font-bold">Kalkulator PPh 21 (Skema TER & Normal)</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Estimasi potongan pajak penghasilan karyawan / pekerja lepas di Indonesia.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-4 shadow-sm">
+            <h3 class="font-semibold text-lg border-b pb-2 dark:border-gray-700">Input Gaji & Status</h3>
+            
+            <div>
+              <label class="block text-xs font-medium mb-1">Gaji Pokok Kotor (Per Bulan)</label>
+              <input type="number" id="pph-salary" value="12000000" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm font-mono">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Tunjangan & Bonus Lainnya (Bulan ini)</label>
+              <input type="number" id="pph-bonus" value="0" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm font-mono">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Status PTKP (Penghasilan Tidak Kena Pajak)</label>
+              <select id="pph-ptkp" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm">
+                <option value="TK0">TK/0 - Tidak Kawin (Rp 54 Juta/thn)</option>
+                <option value="TK1">TK/1 - Tidak Kawin, 1 Tanggungan (Rp 58.5 Juta/thn)</option>
+                <option value="K0">K/0 - Kawin, Tanpa Tanggungan (Rp 58.5 Juta/thn)</option>
+                <option value="K1" selected>K/1 - Kawin, 1 Tanggungan (Rp 63 Juta/thn)</option>
+                <option value="K2">K/2 - Kawin, 2 Tanggungan (Rp 67.5 Juta/thn)</option>
+                <option value="K3">K/3 - Kawin, 3 Tanggungan (Rp 72 Juta/thn)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+              <input type="checkbox" id="pph-bpjs" checked class="w-4 h-4 text-brand-600 rounded">
+              <label for="pph-bpjs" class="text-xs">Sertakan Pengurangan BPJS Ketenagakerjaan (JHT 2% + JP 1%)</label>
+            </div>
+
+            <button onclick="calculatePPh21()" class="w-full py-2.5 bg-brand-600 text-white font-medium text-sm rounded-lg hover:bg-brand-700">Hitung Pajak</button>
+          </div>
+
+          <div class="lg:col-span-2 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500">Gaji Bruto</p>
+                <p id="res-pph-bruto" class="text-xl font-bold font-mono text-gray-800 dark:text-gray-100 mt-1">Rp 0</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500">Estimasi PPh 21 / Bulan</p>
+                <p id="res-pph-tax" class="text-xl font-bold font-mono text-red-500 mt-1">Rp 0</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500">Gaji Bersih (Take Home Pay)</p>
+                <p id="res-pph-thp" class="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">Rp 0</p>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
+              <h4 class="font-semibold mb-3 text-sm">Rincian Perhitungan PPh 21 Tahunan</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between py-1 border-b dark:border-gray-700">
+                  <span class="text-gray-500">Penghasilan Bruto Setahun</span>
+                  <span id="detail-pph-bruto-year" class="font-mono">Rp 0</span>
+                </div>
+                <div class="flex justify-between py-1 border-b dark:border-gray-700">
+                  <span class="text-gray-500">Biaya Jabatan (5%, max 6jt/thn) & BPJS</span>
+                  <span id="detail-pph-deduction" class="font-mono text-red-400">-Rp 0</span>
+                </div>
+                <div class="flex justify-between py-1 border-b dark:border-gray-700">
+                  <span class="text-gray-500">PTKP Pasangan & Tanggungan</span>
+                  <span id="detail-pph-ptkp" class="font-mono">-Rp 0</span>
+                </div>
+                <div class="flex justify-between py-1 border-b dark:border-gray-700 font-medium">
+                  <span>Penghasilan Kena Pajak (PKP) Setahun</span>
+                  <span id="detail-pph-pkp" class="font-mono">Rp 0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. FREELANCE RATE CALCULATOR -->
+      <section id="section-freelance" class="space-y-6 hidden">
+        <div>
+          <h2 class="text-2xl font-bold">Kalkulator Tarif & Pricing Freelance</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Tentukan tarif per jam / proyek berdasarkan target gaji bersih dan biaya operasional.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div class="lg:col-span-5 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-4 shadow-sm">
+            <h3 class="font-semibold text-lg border-b pb-2 dark:border-gray-700">Parameter Target & Biaya</h3>
+            
+            <div>
+              <label class="block text-xs font-medium mb-1">Target Gaji Bersih / Bulan (IDR)</label>
+              <input type="number" id="fl-target-salary" value="15000000" oninput="calculateFreelance()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm font-mono">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Biaya Operasional / Bulan (Software, Internet, Listrik)</label>
+              <input type="number" id="fl-overhead" value="2500000" oninput="calculateFreelance()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm font-mono">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium mb-1">Jam Kerja / Minggu</label>
+                <input type="number" id="fl-hours-week" value="30" oninput="calculateFreelance()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">% Jam Tagihan (Billable)</label>
+                <input type="number" id="fl-billable-pct" value="65" max="100" oninput="calculateFreelance()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Margin Keuntungan & Tabungan Darurat (%)</label>
+              <input type="number" id="fl-profit-margin" value="20" oninput="calculateFreelance()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm">
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 border-l-brand-600">
+                <p class="text-xs text-gray-500">Rekomendasi Tarif / Jam</p>
+                <p id="fl-res-hourly" class="text-2xl font-bold font-mono text-brand-600 dark:text-brand-400 mt-1">Rp 0</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 border-l-emerald-500">
+                <p class="text-xs text-gray-500">Rekomendasi Tarif / Harian (8 Jam)</p>
+                <p id="fl-res-daily" class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">Rp 0</p>
+              </div>
+            </div>
+
+            <!-- Estimasi Proyek -->
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
+              <h4 class="font-semibold text-sm">Simulasi Penawaran Proyek</h4>
+              <div class="flex items-center gap-4">
+                <div class="flex-1">
+                  <label class="block text-xs text-gray-500 mb-1">Estimasi Jam Kerja Proyek</label>
+                  <input type="number" id="fl-project-hours" value="40" oninput="calculateFreelance()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs text-gray-500 mb-1">Estimasi Minimal Harga Proyek</p>
+                  <p id="fl-res-project" class="text-lg font-bold font-mono text-gray-800 dark:text-gray-100">Rp 0</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Breakdown Chart -->
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
+              <h4 class="font-semibold text-sm mb-4">Komposisi Pendapatan Bulanan</h4>
+              <div class="max-w-xs mx-auto">
+                <canvas id="freelanceChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. CONSTRUCTION & MATERIAL ESTIMATOR -->
+      <section id="section-material" class="space-y-6 hidden">
+        <div>
+          <h2 class="text-2xl font-bold">Estimator Material Bangunan & Interior</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Hitung kebutuhan cat dinding dan ubin keramik secara presisi.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Kalkulator Cat -->
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-4 shadow-sm">
+            <div class="flex items-center gap-2 border-b pb-2 dark:border-gray-700">
+              <i data-lucide="paint-bucket" class="w-5 h-5 text-brand-600"></i>
+              <h3 class="font-semibold">Estimator Cat Dinding</h3>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium mb-1">Luas Dinding (m²)</label>
+                <input type="number" id="paint-area" value="50" oninput="calculatePaint()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Jumlah Lapisan (Coats)</label>
+                <input type="number" id="paint-coats" value="2" oninput="calculatePaint()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Daya Sebar Cat (m² / Liter)</label>
+              <input type="number" id="paint-coverage" value="10" oninput="calculatePaint()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-2">
+              <div class="flex justify-between text-sm">
+                <span>Total Kebutuhan Cat:</span>
+                <span id="res-paint-liters" class="font-bold font-mono text-brand-600 dark:text-brand-400">0 Liter</span>
+              </div>
+              <div class="flex justify-between text-xs text-gray-500">
+                <span>Estimasi Kaleng (Galon 2.5L):</span>
+                <span id="res-paint-cans" class="font-mono">0 Galon</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kalkulator Keramik / Ubin -->
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-4 shadow-sm">
+            <div class="flex items-center gap-2 border-b pb-2 dark:border-gray-700">
+              <i data-lucide="grid" class="w-5 h-5 text-emerald-600"></i>
+              <h3 class="font-semibold">Estimator Ubin / Keramik Lantai</h3>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium mb-1">Luas Ruangan (m²)</label>
+                <input type="number" id="tile-area" value="24" oninput="calculateTiles()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Ukuran Ubin</label>
+                <select id="tile-size" onchange="calculateTiles()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+                  <option value="0.09">30 x 30 cm</option>
+                  <option value="0.16">40 x 40 cm</option>
+                  <option value="0.36" selected>60 x 60 cm</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1">Cadangan Kerusakan / Pemotongan (%)</label>
+              <input type="number" id="tile-waste" value="10" oninput="calculateTiles()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm">
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-2">
+              <div class="flex justify-between text-sm">
+                <span>Total Dus Keramik:</span>
+                <span id="res-tile-boxes" class="font-bold font-mono text-emerald-600 dark:text-emerald-400">0 Dus</span>
+              </div>
+              <div class="flex justify-between text-xs text-gray-500">
+                <span>Total Keping Ubin (+ Cadangan):</span>
+                <span id="res-tile-pieces" class="font-mono">0 Keping</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
   </div>
-</div>
 
-<script>
-  const d = document.getElementById('display');
-</script>
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
 
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById(`section-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+
+      if (tabId === 'freelance') initFreelanceChart();
+    }
+
+    // --- 1. INVOICE GENERATOR LOGIC ---
+    let invoiceItems = [
+      { desc: 'Desain Website & UI/UX Kit', qty: 1, price: 7500000 },
+      { desc: 'Pengembangan Frontend & Backend', qty: 1, price: 12500000 }
+    ];
+
+    function renderInvoice() {
+      const type = document.getElementById('inv-type').value;
+      const currency = document.getElementById('inv-currency').value;
+      const number = document.getElementById('inv-number').value;
+      const date = document.getElementById('inv-date').value || new Date().toISOString().split('T')[0];
+      const senderName = document.getElementById('inv-sender-name').value;
+      const senderDetail = document.getElementById('inv-sender-detail').value;
+      const clientName = document.getElementById('inv-client-name').value;
+      const clientDetail = document.getElementById('inv-client-detail').value;
+      const discountPct = parseFloat(document.getElementById('inv-discount').value) || 0;
+      const taxPct = parseFloat(document.getElementById('inv-tax').value) || 0;
+      const notes = document.getElementById('inv-notes').value;
+
+      document.getElementById('preview-type').innerText = type;
+      document.getElementById('preview-number').innerText = '#' + number;
+      document.getElementById('preview-date').innerText = date;
+      document.getElementById('preview-sender-name').innerText = senderName;
+      document.getElementById('preview-sender-detail').innerText = senderDetail;
+      document.getElementById('preview-client-name').innerText = clientName;
+      document.getElementById('preview-client-detail').innerText = clientDetail;
+      document.getElementById('preview-notes').innerText = notes;
+
+      // Input dynamic fields
+      const inputsContainer = document.getElementById('invoice-items-inputs');
+      inputsContainer.innerHTML = '';
+      
+      const tableBody = document.getElementById('preview-items-table');
+      tableBody.innerHTML = '';
+
+      let subtotal = 0;
+
+      invoiceItems.forEach((item, index) => {
+        // Render Editor Input Row
+        const itemRow = document.createElement('div');
+        itemRow.className = 'flex gap-2 items-center';
+        itemRow.innerHTML = `
+          <input type="text" value="${item.desc}" oninput="updateInvoiceItem(${index}, 'desc', this.value)" placeholder="Item" class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-1 text-xs">
+          <input type="number" value="${item.qty}" oninput="updateInvoiceItem(${index}, 'qty', this.value)" class="w-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-1 text-xs text-center">
+          <input type="number" value="${item.price}" oninput="updateInvoiceItem(${index}, 'price', this.value)" class="w-24 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-1 text-xs font-mono">
+          <button onclick="removeInvoiceItem(${index})" class="text-red-500 hover:text-red-700 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+        `;
+        inputsContainer.appendChild(itemRow);
+
+        // Render Preview Row
+        const lineTotal = item.qty * item.price;
+        subtotal += lineTotal;
+
+        const tableRow = document.createElement('tr');
+        tableRow.className = 'border-b border-gray-100';
+        tableRow.innerHTML = `
+          <td class="py-2 text-gray-800">${item.desc}</td>
+          <td class="py-2 text-center text-gray-600">${item.qty}</td>
+          <td class="py-2 text-right font-mono text-gray-600">${currency} ${item.price.toLocaleString('id-ID')}</td>
+          <td class="py-2 text-right font-mono font-semibold text-gray-800">${currency} ${lineTotal.toLocaleString('id-ID')}</td>
+        `;
+        tableBody.appendChild(tableRow);
+      });
+
+      const discountVal = subtotal * (discountPct / 100);
+      const afterDiscount = subtotal - discountVal;
+      const taxVal = afterDiscount * (taxPct / 100);
+      const grandTotal = afterDiscount + taxVal;
+
+      document.getElementById('preview-subtotal').innerText = `${currency} ${subtotal.toLocaleString('id-ID')}`;
+      document.getElementById('preview-discount').innerText = `-${currency} ${discountVal.toLocaleString('id-ID')}`;
+      document.getElementById('preview-tax').innerText = `${currency} ${taxVal.toLocaleString('id-ID')}`;
+      document.getElementById('preview-grandtotal').innerText = `${currency} ${grandTotal.toLocaleString('id-ID')}`;
+
+      lucide.createIcons();
+    }
+
+    function updateInvoiceItem(index, field, value) {
+      if (field === 'qty' || field === 'price') value = parseFloat(value) || 0;
+      invoiceItems[index][field] = value;
+      renderInvoice();
+    }
+
+    function addInvoiceItem() {
+      invoiceItems.push({ desc: 'Layanan Baru', qty: 1, price: 1000000 });
+      renderInvoice();
+    }
+
+    function removeInvoiceItem(index) {
+      invoiceItems.splice(index, 1);
+      renderInvoice();
+    }
+
+    function fillSampleInvoice() {
+      document.getElementById('inv-type').value = 'INVOICE';
+      document.getElementById('inv-sender-name').value = 'Nusantara Creative Agency';
+      document.getElementById('inv-client-name').value = 'PT Teknologi Bangun Negeri';
+      invoiceItems = [
+        { desc: 'Pengembangan Aplikasi Mobile (iOS & Android)', qty: 1, price: 25000000 },
+        { desc: 'UI/UX Design & Prototyping System', qty: 1, price: 8000000 },
+        { desc: 'Cloud Server Setup & Maintenance (1 Tahun)', qty: 1, price: 4500000 }
+      ];
+      renderInvoice();
+    }
+
+    // --- 2. PPH 21 TAX LOGIC ---
+    function calculatePPh21() {
+      const salary = parseFloat(document.getElementById('pph-salary').value) || 0;
+      const bonus = parseFloat(document.getElementById('pph-bonus').value) || 0;
+      const ptkpType = document.getElementById('pph-ptkp').value;
+      const includeBPJS = document.getElementById('pph-bpjs').checked;
+
+      const ptkpMap = { TK0: 54000000, TK1: 58500000, K0: 58500000, K1: 63000000, K2: 67500000, K3: 72000000 };
+      const ptkpValue = ptkpMap[ptkpType] || 54000000;
+
+      const monthlyBruto = salary + bonus;
+      const yearlyBruto = monthlyBruto * 12;
+
+      // Biaya Jabatan (5% max 500k/mo = 6jt/yr)
+      let jabatanFee = Math.min(yearlyBruto * 0.05, 6000000);
+      let bpjsDeduction = includeBPJS ? (salary * 0.03 * 12) : 0;
+      let totalDeduction = jabatanFee + bpjsDeduction;
+
+      let netYearly = yearlyBruto - totalDeduction;
+      let pkp = Math.max(0, netYearly - ptkpValue);
+
+      // Sensus Tarif Progresif Pasal 17
+      let yearlyTax = 0;
+      if (pkp > 0) {
+        if (pkp <= 60000000) {
+          yearlyTax = pkp * 0.05;
+        } else if (pkp <= 250000000) {
+          yearlyTax = (60000000 * 0.05) + ((pkp - 60000000) * 0.15);
+        } else if (pkp <= 500000000) {
+          yearlyTax = (60000000 * 0.05) + (190000000 * 0.15) + ((pkp - 250000000) * 0.25);
+        } else {
+          yearlyTax = (60000000 * 0.05) + (190000000 * 0.15) + (250000000 * 0.25) + ((pkp - 500000000) * 0.30);
+        }
+      }
+
+      const monthlyTax = yearlyTax / 12;
+      const thp = monthlyBruto - monthlyTax - (includeBPJS ? (salary * 0.03) : 0);
+
+      document.getElementById('res-pph-bruto').innerText = `Rp ${monthlyBruto.toLocaleString('id-ID')}`;
+      document.getElementById('res-pph-tax').innerText = `Rp ${Math.round(monthlyTax).toLocaleString('id-ID')}`;
+      document.getElementById('res-pph-thp').innerText = `Rp ${Math.round(thp).toLocaleString('id-ID')}`;
+
+      document.getElementById('detail-pph-bruto-year').innerText = `Rp ${yearlyBruto.toLocaleString('id-ID')}`;
+      document.getElementById('detail-pph-deduction').innerText = `-Rp ${totalDeduction.toLocaleString('id-ID')}`;
+      document.getElementById('detail-pph-ptkp').innerText = `-Rp ${ptkpValue.toLocaleString('id-ID')}`;
+      document.getElementById('detail-pph-pkp').innerText = `Rp ${pkp.toLocaleString('id-ID')}`;
+    }
+
+    // --- 3. FREELANCE RATE LOGIC ---
+    let chartInstance = null;
+
+    function calculateFreelance() {
+      const targetSalary = parseFloat(document.getElementById('fl-target-salary').value) || 0;
+      const overhead = parseFloat(document.getElementById('fl-overhead').value) || 0;
+      const hoursPerWeek = parseFloat(document.getElementById('fl-hours-week').value) || 1;
+      const billablePct = parseFloat(document.getElementById('fl-billable-pct').value) || 100;
+      const profitMarginPct = parseFloat(document.getElementById('fl-profit-margin').value) || 0;
+      const projectHours = parseFloat(document.getElementById('fl-project-hours').value) || 0;
+
+      const monthlyNeed = (targetSalary + overhead) * (1 + (profitMarginPct / 100));
+      const totalHoursMonth = hoursPerWeek * 4.33;
+      const billableHoursMonth = totalHoursMonth * (billablePct / 100);
+
+      const minHourlyRate = billableHoursMonth > 0 ? monthlyNeed / billableHoursMonth : 0;
+      const dailyRate = minHourlyRate * 8;
+      const projectPrice = minHourlyRate * projectHours;
+
+      document.getElementById('fl-res-hourly').innerText = `Rp ${Math.round(minHourlyRate).toLocaleString('id-ID')}`;
+      document.getElementById('fl-res-daily').innerText = `Rp ${Math.round(dailyRate).toLocaleString('id-ID')}`;
+      document.getElementById('fl-res-project').innerText = `Rp ${Math.round(projectPrice).toLocaleString('id-ID')}`;
+
+      updateChart(targetSalary, overhead, monthlyNeed - (targetSalary + overhead));
+    }
+
+    function initFreelanceChart() {
+      const ctx = document.getElementById('freelanceChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Gaji Bersih', 'Overhead', 'Profit/Simpanan'],
+          datasets: [{
+            data: [15000000, 2500000, 3500000],
+            backgroundColor: ['#2563eb', '#f59e0b', '#10b981']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+      calculateFreelance();
+    }
+
+    function updateChart(salary, overhead, profit) {
+      if (chartInstance) {
+        chartInstance.data.datasets[0].data = [salary, overhead, Math.max(0, profit)];
+        chartInstance.update();
+      }
+    }
+
+    // --- 4. MATERIAL ESTIMATOR LOGIC ---
+    function calculatePaint() {
+      const area = parseFloat(document.getElementById('paint-area').value) || 0;
+      const coats = parseFloat(document.getElementById('paint-coats').value) || 1;
+      const coverage = parseFloat(document.getElementById('paint-coverage').value) || 10;
+
+      const totalLiters = (area * coats) / coverage;
+      const cans = Math.ceil(totalLiters / 2.5); // Std 2.5L galon
+
+      document.getElementById('res-paint-liters').innerText = `${totalLiters.toFixed(1)} Liter`;
+      document.getElementById('res-paint-cans').innerText = `${cans} Galon (2.5L)`;
+    }
+
+    function calculateTiles() {
+      const area = parseFloat(document.getElementById('tile-area').value) || 0;
+      const tileSize = parseFloat(document.getElementById('tile-size').value) || 0.36;
+      const wastePct = parseFloat(document.getElementById('tile-waste').value) || 0;
+
+      const effectiveArea = area * (1 + (wastePct / 100));
+      const totalPieces = Math.ceil(effectiveArea / tileSize);
+      
+      // Standard dus isi ~1m2
+      const boxes = Math.ceil(effectiveArea);
+
+      document.getElementById('res-tile-boxes').innerText = `${boxes} Dus`;
+      document.getElementById('res-tile-pieces').innerText = `${totalPieces} Keping`;
+    }
+
+    // Initializations
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('inv-date').valueAsDate = new Date();
+      renderInvoice();
+      calculatePPh21();
+      calculatePaint();
+      calculateTiles();
+    });
+  </script>
 </body>
 </html>

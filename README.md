@@ -1,4 +1,4 @@
-#NicheCalc(kalkulator)
+#NicheCalc(kalkulator)-
 Website NicheCalc (kalkulator dan generator dokumen yang telah dibuat sebelumnya) dirancang khusus untuk mempermudah berbagai aspek pekerjaan, mulai dari administrasi hingga perencanaan keuangan dan material.
 ​Berikut adalah rangkuman manfaat utama dari website tersebut:
 ​1. Otomatisasi Pembuatan Dokumen (Invoice & Penawaran)
